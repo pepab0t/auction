@@ -5,34 +5,49 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 
+from .forms import NewListingForm
 from .models import Listing, User
 
 
 def index(request):
     items = Listing.objects.all()
 
-    return render(request, "auctions/index.html", {
-        "items": items
-    })
+    return render(request, "auctions/index.html", {"items": items})
+
 
 @login_required
 def new_item(request):
     if request.method == "POST":
-        title=request.POST["title"]
-        desc = request.POST["desc"]
-        bid = request.POST["bid"]
-        # image = request.POST["image"]
-        cat = request.POST["cat"]
+        # title = request.POST["title"]
+        # desc = request.POST["desc"]
+        # bid = request.POST["bid"]
+        # cat = request.POST["cat"]
 
-        print(title, desc, bid, cat)
+        # if "myimage" in request.FILES:
+        #     image = request.FILES["myimage"]
+        # else:
+        #     image = None
 
-        item = Listing(title=title, description=desc, bid=bid, category=cat, user=request.user)
-        item.save()
+        form = NewListingForm(request.POST, request.FILES)
+        if form.is_valid():
+            listing = form.save(commit=False)
+            if "image" in request.FILES:
+                listing.image = request.FILES["image"].file.read()
+            listing.user = request.user
+            listing.save()
+            print("saved")
+        else:
+            print(form.errors)
 
-        return HttpResponseRedirect(reverse('index'))
-    return render(request, "auctions/new_listing.html", {
-        "categories": Listing.CATEGORIES
-    })
+        return HttpResponseRedirect(reverse("index"))
+
+    else:
+        form = NewListingForm()
+    return render(
+        request,
+        "auctions/new_listing.html",
+        {"categories": Listing.CATEGORIES, "form": form},
+    )
 
 
 def login_view(request):
@@ -48,9 +63,11 @@ def login_view(request):
             login(request, user)
             return HttpResponseRedirect(reverse("index"))
         else:
-            return render(request, "auctions/login.html", {
-                "message": "Invalid username and/or password."
-            })
+            return render(
+                request,
+                "auctions/login.html",
+                {"message": "Invalid username and/or password."},
+            )
     else:
         return render(request, "auctions/login.html")
 
@@ -69,18 +86,20 @@ def register(request):
         password = request.POST["password"]
         confirmation = request.POST["confirmation"]
         if password != confirmation:
-            return render(request, "auctions/register.html", {
-                "message": "Passwords must match."
-            })
+            return render(
+                request, "auctions/register.html", {"message": "Passwords must match."}
+            )
 
         # Attempt to create new user
         try:
             user = User.objects.create_user(username, email, password)
             user.save()
         except IntegrityError:
-            return render(request, "auctions/register.html", {
-                "message": "Username already taken."
-            })
+            return render(
+                request,
+                "auctions/register.html",
+                {"message": "Username already taken."},
+            )
         login(request, user)
         return HttpResponseRedirect(reverse("index"))
     else:

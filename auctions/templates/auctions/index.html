@@ -1,16 +1,20 @@
-{% extends "auctions/layout.html" %}
+{% extends "auctions/layout.html" %} {% block body %}
+<h2>Active Listings</h2>
 
-{% block body %}
-    <h2>Active Listings</h2>
-
+{% if items %} 
     {% for item in items %}
         <ul>
-            <h3>{{item.title}}</h3>
-            <ul>
-                <li>{{item.desc}}</li>
-                <li>${{item.bid}}</li>
-                <li>{{item.category}}</li>
-            </ul>
+        <h3>{{item.title}}</h3>
+        <ul>
+            <li>{{item.desc}}</li>
+            <li>${{item.bid}}</li>
+            <li>{{item.category}}</li>
         </ul>
-    {% endfor %}
+        </ul>
+    {% empty %}
+        No items.
+    {% endfor %} 
+{% else %}
+        TODO
+{% endif %} 
 {% endblock %}
