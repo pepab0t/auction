@@ -21,7 +21,9 @@
         <img src="{% static 'auctions/img/no_image.jpg'%}" alt="no image" width="300" >
     {% endif %}
 
+
     <ul>
+        <li>Status: {{listing.active|yesno:"Active,Closed"}}</li>
         <li>Description: {{listing.description}}</li>
         <li>Category: {{listing.category}}</li>
         <li>Bid: ${{max_bid.value}}</li>
@@ -29,7 +31,18 @@
 
     {% if user.is_authenticated %}
         {% if author == user %}
-            This is my auction
+            {% if listing.active %}
+            <a href="{% url 'close_listing' listing.id%}">Close the auction</a>
+            {% else %}
+                {% with listing.winner as winner %}
+                {% if winner %}
+                    <p>Auction is closed. Winner is {{winner.username}}</p>
+                {% else %}
+                    <p>Auction is closed. No one is winner</p>
+                {% endif %}
+                {% endwith %}
+                
+            {% endif %}
         {% else %}
             <form action="{% url 'bid' listing.id %}" method="POST">
                 {% csrf_token %}

@@ -1,4 +1,4 @@
-import base64
+from typing import Optional
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
@@ -28,6 +28,16 @@ class Listing(models.Model):
     category = models.CharField(max_length=2, choices=CATEGORIES, null=True, blank=True)
     image = models.ImageField(upload_to=settings.MEDIA_ROOT, null=True, default=None, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="listing")
+
+    active = models.BooleanField(null=False, default=True)
+
+    winner = models.ForeignKey(User, on_delete=models.SET_NULL, related_name="wins", default=None, null=True)
+
+    def close(self, winner: Optional[User] = None):
+        self.active = False
+        if winner is not None:
+            self.winner = winner
+        self.save()
 
 class Bid(models.Model):
     id = models.AutoField(primary_key=True)

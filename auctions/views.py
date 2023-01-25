@@ -12,9 +12,10 @@ from .models import Bid, Listing, User, Wishlist
 
 
 def index(request):
-    items = Listing.objects.all()
+    items = Listing.objects.filter(active=True)
 
-    print(items.last())
+    if "messages" not in request.session:
+        request.session["messages"] = []
 
     return render(request, "auctions/index.html", {"items": items})
 
@@ -56,12 +57,15 @@ def listing(request, listing_id: int):
 
     max_bid = listing.bids.order_by('-value').first()
 
+    messages = request.session["messages"].copy()
+    request.session['messages'] = []
+
     return render(request, "auctions/listing.html", {
         "listing": listing, 
         "wishlist": wishlist,
         "max_bid": max_bid, 
         "author": listing.user,
-        "messages": get_messages()
+        "messages": messages
     })
 
 @login_required
@@ -73,13 +77,14 @@ def bid(request, listing_id: int):
         try:
             new_bid = float(request.POST['bid'])
         except ValueError:
-            set_messages("Bid must be number")
+            request.session['messages'] += ["Bid must be number"]
+            print(request.session['messages'])
             return HttpResponseRedirect(reverse('listing', kwargs=kwargs))
 
         listing = Listing.objects.get(pk=listing_id)
         current_bid = listing.bids.order_by("-value").first()
         if new_bid < current_bid.value:
-            set_messages(f"Bid must be greater than current bid: ${current_bid.value}")
+            request.session['messages'] += [f"Bid must be greater than current bid: ${current_bid.value}"]
             return HttpResponseRedirect(reverse('listing', kwargs=kwargs))
 
         Bid.objects.create(value=new_bid, listing=listing, user=request.user)
@@ -101,6 +106,18 @@ def wishlist(request, listing_id: int):
         wishlist.save()
 
     return HttpResponseRedirect(reverse("listing", kwargs={"listing_id": listing_id}))
+
+def close(request, listing_id):
+    listing = Listing.objects.get(pk=listing_id)
+
+    winner_bid = listing.bids.order_by("-value").first()
+    
+    if winner_bid is None:
+        listing.close()
+    else:
+        listing.close(winner_bid.user)
+
+    return HttpResponseRedirect(reverse('listing', kwargs={"listing_id": listing_id}))
 
 
 def login_view(request):

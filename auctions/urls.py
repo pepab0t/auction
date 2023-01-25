@@ -13,5 +13,6 @@ urlpatterns = [
     path("<int:listing_id>", views.listing, name="listing"),
     path("wishlist/<int:listing_id>", views.wishlist, name="handle_wishlist"),
     path("bid/<int:listing_id>", views.bid, name="bid"),
+    path("close/<int:listing_id>", views.close, name="close_listing")
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
