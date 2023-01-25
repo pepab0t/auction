@@ -6,6 +6,6 @@ from .models import Listing
 class NewListingForm(forms.ModelForm):
     class Meta:
         model = Listing
-        fields = ("title", "description", "bid", "category")
+        fields = ("title", "description", "category", "image")
 
-        labels = {"bid": "Starting bid"}
+        # labels = {"bid": "Starting bid"}

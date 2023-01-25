@@ -1,0 +1,51 @@
+{% extends 'auctions/layout.html' %}
+{% load static %}
+
+{% block body %}
+    {% if messages %}
+        {% for message in messages %}
+            {{message}}
+        {% endfor %}
+    {% endif %}
+
+    <h3>{{listing.title}}</h3>
+
+    {% if wishlist %}
+        wishlisted
+        <br>
+    {% endif %}
+
+    {% if listing.image %}
+        <img src="{{ listing.image.url }}" alt="image of {{listing.title}}" width="300" >
+    {% else %}
+        <img src="{% static 'auctions/img/no_image.jpg'%}" alt="no image" width="300" >
+    {% endif %}
+
+    <ul>
+        <li>Description: {{listing.description}}</li>
+        <li>Category: {{listing.category}}</li>
+        <li>Bid: ${{max_bid.value}}</li>
+    </ul>
+
+    {% if user.is_authenticated %}
+        {% if author == user %}
+            This is my auction
+        {% else %}
+            <form action="{% url 'bid' listing.id %}" method="POST">
+                {% csrf_token %}
+                <label for="bid">Your bid $</label>
+                <input type="text" id="bid" name="bid">
+                <input type="submit" value="Bid">
+            </form>
+            {% if wishlist %}
+                <a href="{% url 'handle_wishlist' listing.id %}">Remove from wishlist</a>
+            {% else %}
+                <a href="{% url 'handle_wishlist' listing.id %}">Add to wishlist</a>
+            {% endif %}
+        {% endif %}
+
+        <br>
+    {% endif %}
+
+    <a href="{% url 'index' %}">Back to all listings</a>
+{% endblock %}

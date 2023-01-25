@@ -11,13 +11,14 @@
         {{ form.description.label }}
         {{ form.description }}
         <br>
-        {{ form.bid.label }}
-        {{ form.bid }}
+        <label for="bid">Starting bid</label>
+        <input type="text" name="bid" id="bid">
+        
         <br>
         {{ form.category.label }}
         {{ form.category }}
         <br>
-        <input type="file" name="image" accept=".png,.jpg,.jpeg" value="select image">
+        {{ form.image }}
         <br>
         <input type="submit" value="Create">
     </form>

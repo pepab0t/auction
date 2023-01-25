@@ -5,12 +5,16 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 
+from messages import get_messages, set_messages
+
 from .forms import NewListingForm
-from .models import Listing, User
+from .models import Bid, Listing, User, Wishlist
 
 
 def index(request):
     items = Listing.objects.all()
+
+    print(items.last())
 
     return render(request, "auctions/index.html", {"items": items})
 
@@ -18,36 +22,85 @@ def index(request):
 @login_required
 def new_item(request):
     if request.method == "POST":
-        # title = request.POST["title"]
-        # desc = request.POST["desc"]
-        # bid = request.POST["bid"]
-        # cat = request.POST["cat"]
 
-        # if "myimage" in request.FILES:
-        #     image = request.FILES["myimage"]
-        # else:
-        #     image = None
-
-        form = NewListingForm(request.POST, request.FILES)
-        if form.is_valid():
-            listing = form.save(commit=False)
-            if "image" in request.FILES:
-                listing.image = request.FILES["image"].file.read()
+        listing = NewListingForm(request.POST, request.FILES)
+        if listing.is_valid():
+            listing = listing.save(commit=False)
             listing.user = request.user
             listing.save()
+
+            # listing = Listing.objects.get(pk=listing.id)
+            print(listing.id)
+
+            bid_val = request.POST["bid"]
+            bid = Bid.objects.create(value = bid_val, user = request.user, listing=listing)
+
             print("saved")
         else:
-            print(form.errors)
+            print(listing.errors)
 
         return HttpResponseRedirect(reverse("index"))
 
     else:
-        form = NewListingForm()
+        listing = NewListingForm()
     return render(
         request,
         "auctions/new_listing.html",
-        {"categories": Listing.CATEGORIES, "form": form},
+        {"categories": Listing.CATEGORIES, "form": listing},
     )
+
+def listing(request, listing_id: int):
+    listing = Listing.objects.get(pk=listing_id)
+
+    wishlist = Wishlist.objects.filter(user=request.user, listing=listing).first()
+
+    max_bid = listing.bids.order_by('-value').first()
+
+    return render(request, "auctions/listing.html", {
+        "listing": listing, 
+        "wishlist": wishlist,
+        "max_bid": max_bid, 
+        "author": listing.user,
+        "messages": get_messages()
+    })
+
+@login_required
+def bid(request, listing_id: int):
+    kwargs = {
+        "listing_id": listing_id,
+    }
+    if request.method == "POST":
+        try:
+            new_bid = float(request.POST['bid'])
+        except ValueError:
+            set_messages("Bid must be number")
+            return HttpResponseRedirect(reverse('listing', kwargs=kwargs))
+
+        listing = Listing.objects.get(pk=listing_id)
+        current_bid = listing.bids.order_by("-value").first()
+        if new_bid < current_bid.value:
+            set_messages(f"Bid must be greater than current bid: ${current_bid.value}")
+            return HttpResponseRedirect(reverse('listing', kwargs=kwargs))
+
+        Bid.objects.create(value=new_bid, listing=listing, user=request.user)
+        print(f"bid saved {new_bid}")
+
+    return HttpResponseRedirect(reverse("listing", kwargs=kwargs))
+
+@login_required
+def wishlist(request, listing_id: int):
+    # add to wishlist
+    listing = Listing.objects.get(pk=listing_id)
+
+    wishlist = Wishlist.objects.filter(user=request.user, listing=listing)
+
+    if wishlist.exists():
+        wishlist.delete()
+    else:
+        wishlist = Wishlist(user=request.user, listing=listing)
+        wishlist.save()
+
+    return HttpResponseRedirect(reverse("listing", kwargs={"listing_id": listing_id}))
 
 
 def login_view(request):
@@ -92,8 +145,9 @@ def register(request):
 
         # Attempt to create new user
         try:
-            user = User.objects.create_user(username, email, password)
+            user = User.objects.create_user(username, email, password)# type: ignore
             user.save()
+
         except IntegrityError:
             return render(
                 request,

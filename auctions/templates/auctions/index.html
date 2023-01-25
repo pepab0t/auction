@@ -1,20 +1,36 @@
 {% extends "auctions/layout.html" %} {% block body %}
+{% load static %}
+
 <h2>Active Listings</h2>
 
 {% if items %} 
     {% for item in items %}
-        <ul>
-        <h3>{{item.title}}</h3>
-        <ul>
-            <li>{{item.desc}}</li>
-            <li>${{item.bid}}</li>
-            <li>{{item.category}}</li>
-        </ul>
-        </ul>
+        <hr>
+        <div>
+            <a href="{% url 'listing' item.id %}"><h3>{{item.title}}</h3>
+            <br>
+            <span>
+                {% if item.image %}
+                    <img src="{{ item.image.url }}" alt="image of {{item.title}}" width="300" >
+                {% else %}
+                    <img src="{% static 'auctions/img/no_image.jpg'%}" alt="no image" width="300" >
+                {% endif %}
+                <div>
+                    <ul>
+                        <li>Description: {{item.description}}</li>
+                        <li>Category: {{item.category}}</li>
+                        {% with item.bids.all|dictsort:"value"|last as last%}
+                            <li>Bid: ${{last.value}}</li>
+                        {% endwith %}
+                    </ul>
+                </div>
+            </span>
+            </a>
+        </div>
     {% empty %}
         No items.
     {% endfor %} 
 {% else %}
-        TODO
-{% endif %} 
+        <p>No items.</p>
+{% endif %}
 {% endblock %}
