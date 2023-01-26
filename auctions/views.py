@@ -253,9 +253,9 @@ def register(request):
 
         # Attempt to create new user
         try:
-            user = User.objects.create_user(username, email, password)# type: ignore
+            user = User.objects.create_user(username=username, email=email, password=password)# type: ignore
             user.save()
-
+            print("User created")
         except IntegrityError:
             return render(
                 request,

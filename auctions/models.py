@@ -34,7 +34,7 @@ class Listing(models.Model):
 
     active = models.BooleanField(null=False, default=True)
 
-    winner = models.ForeignKey(User, on_delete=models.SET_NULL, related_name="wins", default=None, null=True)
+    winner = models.ForeignKey(User, on_delete=models.SET_NULL, related_name="wins", default=None, null=True, blank=True)
 
     def close(self, winner: Optional[User] = None):
         self.active = False

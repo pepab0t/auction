@@ -26,12 +26,16 @@
         <li>Status: {{listing.active|yesno:"Active,Closed"}}</li>
         <li>Description: {{listing.description}}</li>
         <li>Category: <a href="{% url 'category' listing.category %}">{{listing.get_category_display}}</a></li>
-        <li>Number of bids: {{listing.bids.all|length|add:"-1"}}</li>
-        {% if max_bid.user == listing.user %}
-            <li>Bid: ${{max_bid.value}}</li>
+        {% if max_bid %}
+            <li>Number of bids: {{listing.bids.all|length}}</li>
+            {% if max_bid.user == listing.user %}
+                <li>Bid: ${{max_bid.value}}</li>
+            {% else %}
+                <li>Bid: ${{max_bid.value}} (<b>{{max_bid.user.username}}</b>)</li>
+            {% endif%}
         {% else %}
-            <li>Bid: ${{max_bid.value}} (<b>{{max_bid.user.username}}</b>)</li>
-        {% endif%}
+            <li>No bids</li>
+        {% endif %}
     </ul>
 
     {% if listing.active %}

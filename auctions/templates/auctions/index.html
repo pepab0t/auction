@@ -24,9 +24,14 @@
                 <ul>
                     <li>Description: {{item.description}}</li>
                     <li>Category: <a href="{% url 'category' item.category %}">{{item.get_category_display}}</a></li>
-                    {% with item.bids.all|dictsort:"value"|last as last%}
-                        <li>Bid: ${{last.value}}</li>
-                    {% endwith %}
+                    {% if item.bids.all %}
+                        {% with item.bids.all|dictsort:"value"|last as last%}
+                            <li>Bid: ${{last.value}}</li>
+                        {% endwith %}
+                    {% else %}
+                        <li>No bids.</li>
+                    {% endif %}
+
                 </ul>
             </div>
         </div>
