@@ -2,6 +2,12 @@
 
 {% block body %}
 
+    {% for message in messages %}
+        {{message}}<br>
+    {% endfor %}
+
+    <h2>New listing</h2>
+
     <form action="{% url 'new_listing' %}" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         

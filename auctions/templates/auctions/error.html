@@ -1,0 +1,11 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <h2>Error</h2>
+    <h3>{{title}}</h3>
+    <ul>
+        {% for message in messages %}
+            <li>message</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

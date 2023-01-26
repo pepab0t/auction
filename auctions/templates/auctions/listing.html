@@ -25,40 +25,60 @@
     <ul>
         <li>Status: {{listing.active|yesno:"Active,Closed"}}</li>
         <li>Description: {{listing.description}}</li>
-        <li>Category: {{listing.category}}</li>
-        <li>Bid: ${{max_bid.value}}</li>
+        <li>Category: <a href="{% url 'category' listing.category %}">{{listing.get_category_display}}</a></li>
+        <li>Number of bids: {{listing.bids.all|length|add:"-1"}}</li>
+        {% if max_bid.user == listing.user %}
+            <li>Bid: ${{max_bid.value}}</li>
+        {% else %}
+            <li>Bid: ${{max_bid.value}} (<b>{{max_bid.user.username}}</b>)</li>
+        {% endif%}
     </ul>
 
-    {% if user.is_authenticated %}
-        {% if author == user %}
-            {% if listing.active %}
-            <a href="{% url 'close_listing' listing.id%}">Close the auction</a>
+    {% if listing.active %}
+        {% if user.is_authenticated %}
+            {% if author == user %}
+                <a href="{% url 'close_listing' listing.id%}">Close the auction</a>
+                <br>
             {% else %}
-                {% with listing.winner as winner %}
-                {% if winner %}
-                    <p>Auction is closed. Winner is {{winner.username}}</p>
-                {% else %}
-                    <p>Auction is closed. No one is winner</p>
-                {% endif %}
-                {% endwith %}
-                
-            {% endif %}
-        {% else %}
-            <form action="{% url 'bid' listing.id %}" method="POST">
+                <form action="{% url 'bid' listing.id %}" method="POST">
                 {% csrf_token %}
                 <label for="bid">Your bid $</label>
                 <input type="text" id="bid" name="bid">
                 <input type="submit" value="Bid">
             </form>
-            {% if wishlist %}
+                {% if wishlist %}
                 <a href="{% url 'handle_wishlist' listing.id %}">Remove from wishlist</a>
-            {% else %}
+                {% else %}
                 <a href="{% url 'handle_wishlist' listing.id %}">Add to wishlist</a>
+                {% endif %}
+                <br>
             {% endif %}
         {% endif %}
-
-        <br>
+    {% else %}
+            {% with listing.winner as winner %}
+                {% if winner %}
+                    <p>Auction is closed. Winner is user: <b>{{winner.username}}.</b></p>
+                {% else %}
+                    <p>Auction is closed. No one is winner.</p>
+                {% endif %}
+            {% endwith %}
     {% endif %}
-
     <a href="{% url 'index' %}">Back to all listings</a>
+    <div>
+        Comments: <br>
+        {% for comment in listing.comments.all|dictsort:"created" %}
+        <b>{{comment.user.username}}</b>: {{comment.text}}
+        {% if user == comment.user %}
+            <a href="{% url 'delete_comment' comment.id %}">delete</a>
+        {% endif %}
+        <br>
+        {% endfor %}
+        {% if user.is_authenticated %}
+        <form action="{% url 'comment' listing.id %}" method="POST">
+            {% csrf_token %}
+            <input type="text" name="comment">
+            <input type="submit" value="Comment">
+        </form>
+        {% endif %}
+    </div>
 {% endblock %}
